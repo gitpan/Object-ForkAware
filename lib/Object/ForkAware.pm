@@ -1,22 +1,21 @@
 use strict;
 use warnings;
 package Object::ForkAware;
-{
-  $Object::ForkAware::VERSION = '0.001';
-}
-# git description: a649af8
+# git description: v0.001-29-gc5fd524
+$Object::ForkAware::VERSION = '0.002';
+# ABSTRACT: Make an object aware of process forks and threads, recreating itself as needed
+# KEYWORDS: process thread fork multiprocessing multithreading clone
+# vim: set ts=8 sw=4 tw=78 et :
 
-BEGIN {
-  $Object::ForkAware::AUTHORITY = 'cpan:ETHER';
-}
-# ABSTRACT: make an object aware of process forks, recreating itself as needed
+use Scalar::Util 'blessed';
+use namespace::clean;
 
 sub new
 {
     my ($class, %opts) = @_;
 
     my $self = {};
-    $self->{_create} = $opts{create} || die 'missing required option: create';
+    $self->{_create} = $opts{create} or die 'missing required option: create';
     $self->{_on_fork} = $opts{on_fork} if exists $opts{on_fork};
 
     $self = bless($self, $class);
@@ -40,6 +39,7 @@ sub _get_obj
 {
     my $self = shift;
 
+    return if not blessed $self;
     if (not defined $self->{_pid}
         or $$ != $self->{_pid}
         or defined $self->{_tid} and $self->{_tid} != threads->tid)
@@ -62,6 +62,16 @@ sub can
     $self->SUPER::can($class) || $self->_get_obj->can($class);
 }
 
+sub VERSION
+{
+    my ($self, @args) = @_;
+
+    my $obj = $self->_get_obj;
+    return $obj
+        ? $obj->VERSION(@args)
+        : $self->SUPER::VERSION(@args);
+}
+
 our $AUTOLOAD;
 sub AUTOLOAD
 {
@@ -80,13 +90,15 @@ __END__
 
 =pod
 
+=encoding UTF-8
+
 =head1 NAME
 
-Object::ForkAware - make an object aware of process forks, recreating itself as needed
+Object::ForkAware - Make an object aware of process forks and threads, recreating itself as needed
 
 =head1 VERSION
 
-version 0.001
+version 0.002
 
 =head1 SYNOPSIS
 
@@ -99,7 +111,7 @@ version 0.001
     $client->send(...);
 
     # later, we fork for some reason
-    if (!fork) {
+    if (fork == 0) {
         # child process
         $client->send(...);
     }
@@ -118,7 +130,7 @@ it's an easy problem to run into.
 
 This module invisibly wraps your object and makes it fork-aware, automatically
 checking C<$$> on every access and recreating the object if the process id
-changes.  (This object is also thread-aware; if the thread id changes, the
+changes.  (The object is also thread-aware; if the thread id changes, the
 object is recreated in the same manner.)
 
 The object can be safely used with type checks and various type constraint
@@ -141,19 +153,22 @@ creation:
         on_fork => sub { MyClient->new(server => 'other.foo.com' },
     );
 
+=for stopwords other's prefork
+
 =head1 METHODS
 
-=over
-
-=item * C<< new(option => val, option => val...) >>
+=head2 C<< new(option => val, option => val...) >>
 
 Provides an instance of this class.  Available options are:
 
-=over
+=over 4
 
 =item * C<create> (mandatory) - a sub reference containing the code to be run
-when the object is initially created, as well as re-recreated, returning the
+when the object is initially created (as well as recreated, if there is no
+C<on_fork> sub provided), returning the
 object instance.
+If the object previously existed, it is passed as an argument to this method,
+allowing you to copy any state from the old object to the new one.
 
 =item * C<on_fork> - a sub reference containing the code to be run when a fork
 is detected. It should either generate an exception or return the new object
@@ -163,8 +178,8 @@ instance.
 is not called immediately, but instead deferred until the first time the
 object is used. This prevents useless object creation if it is not to be used
 until after the first fork.
-
-=back
+If the object previously existed, it is passed as an argument to this method,
+allowing you to copy any state from the old object to the new one.
 
 =back
 
@@ -172,7 +187,7 @@ There are no other public methods. All method calls on the object will be
 passed through to the containing object, after checking C<$$> and possibly
 recreating the object via the provided C<create> (or C<on_fork>) sub.
 
-=for Pod::Coverage::TrustPod isa can
+=for Pod::Coverage::TrustPod isa can VERSION
 
 =head1 LIMITATIONS
 
@@ -182,8 +197,10 @@ overloading.  Partial support is possible, but is not yet implemented.
 
 =head1 SUPPORT
 
-Bugs may be submitted through L<https://rt.cpan.org/Public/Dist/Display.html?Name=Object-ForkAware>
-or L<bug-Object-ForkAware@rt.cpan.org>.
+=for stopwords irc
+
+Bugs may be submitted through L<the RT bug tracker|https://rt.cpan.org/Public/Dist/Display.html?Name=Object-ForkAware>
+(or L<mailto:bug-Object-ForkAware@rt.cpan.org>).
 I am also usually active on irc, as 'ether' at C<irc.perl.org>.
 
 =head1 ACKNOWLEDGEMENTS
@@ -192,9 +209,25 @@ The concept for this module came about through a conversation with Matt S.
 Trout <mst@shadowcat.co.uk> after experiencing the issue described in the
 synopsis on a prefork job-processing daemon.
 
+Some of the pid detection logic was inspired by the wonderful L<DBIx::Connector>.
+
 =head1 SEE ALSO
 
-L<Object::Wrapper>, L<Object::Wrapper::Fork>
+=over 4
+
+=item *
+
+L<Object::Wrapper>
+
+=item *
+
+L<Object::Wrapper::Fork>
+
+=item *
+
+L<POSIX::AtFork>
+
+=back
 
 =head1 AUTHOR
 

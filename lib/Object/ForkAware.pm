@@ -1,14 +1,14 @@
 use strict;
 use warnings;
 package Object::ForkAware;
-# git description: v0.001-29-gc5fd524
-$Object::ForkAware::VERSION = '0.002';
+# git description: v0.002-13-gf7cb9f7
+$Object::ForkAware::VERSION = '0.003';
 # ABSTRACT: Make an object aware of process forks and threads, recreating itself as needed
 # KEYWORDS: process thread fork multiprocessing multithreading clone
 # vim: set ts=8 sw=4 tw=78 et :
 
 use Scalar::Util 'blessed';
-use namespace::clean;
+use namespace::autoclean;
 
 sub new
 {
@@ -42,7 +42,7 @@ sub _get_obj
     return if not blessed $self;
     if (not defined $self->{_pid}
         or $$ != $self->{_pid}
-        or defined $self->{_tid} and $self->{_tid} != threads->tid)
+        or $INC{'threads.pm'} and ($self->{_tid} || 0) != threads->tid)
     {
         $self->_create_obj($self->{_on_fork} || $self->{_create});
     }
@@ -53,13 +53,19 @@ sub _get_obj
 sub isa
 {
     my ($self, $class) = @_;
-    $self->SUPER::isa($class) || $self->_get_obj->isa($class);
+    $self->SUPER::isa($class) || do {
+        my $obj = $self->_get_obj;
+        $obj && $obj->isa($class);
+    };
 }
 
 sub can
 {
-    my ($self, $class) = @_;
-    $self->SUPER::can($class) || $self->_get_obj->can($class);
+    my ($self, $method) = @_;
+    $self->SUPER::can($method) || do {
+        my $obj = $self->_get_obj;
+        $obj && $obj->can($method);
+    };
 }
 
 sub VERSION
@@ -98,7 +104,7 @@ Object::ForkAware - Make an object aware of process forks and threads, recreatin
 
 =head1 VERSION
 
-version 0.002
+version 0.003
 
 =head1 SYNOPSIS
 
@@ -184,7 +190,7 @@ allowing you to copy any state from the old object to the new one.
 =back
 
 There are no other public methods. All method calls on the object will be
-passed through to the containing object, after checking C<$$> and possibly
+passed through to the containing object, after checking C<$$> (or C<< threads->tid >>) and possibly
 recreating the object via the provided C<create> (or C<on_fork>) sub.
 
 =for Pod::Coverage::TrustPod isa can VERSION
@@ -206,7 +212,7 @@ I am also usually active on irc, as 'ether' at C<irc.perl.org>.
 =head1 ACKNOWLEDGEMENTS
 
 The concept for this module came about through a conversation with Matt S.
-Trout <mst@shadowcat.co.uk> after experiencing the issue described in the
+Trout C<mst@shadowcat.co.uk> after experiencing the issue described in the
 synopsis on a prefork job-processing daemon.
 
 Some of the pid detection logic was inspired by the wonderful L<DBIx::Connector>.
@@ -239,5 +245,11 @@ This software is copyright (c) 2013 by Karen Etheridge.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
+
+=head1 CONTRIBUTOR
+
+=for stopwords Graham Knop
+
+Graham Knop <haarg@haarg.org>
 
 =cut

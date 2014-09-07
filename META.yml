@@ -6,12 +6,13 @@ build_requires:
   ExtUtils::MakeMaker: '0'
   File::Spec: '0'
   Test::Fatal: '0'
-  Test::More: '0'
+  Test::More: '0.88'
   Test::Warnings: '0.009'
+  if: '0'
   lib: '0'
 configure_requires:
   ExtUtils::MakeMaker: '0'
-  Module::Build::Tiny: '0.037'
+  Module::Build::Tiny: '0.038'
 dynamic_config: 0
 generated_by: 'Dist::Zilla version 5.020, CPAN::Meta::Converter version 2.142060'
 keywords:
@@ -34,10 +35,10 @@ no_index:
 provides:
   Object::ForkAware:
     file: lib/Object/ForkAware.pm
-    version: '0.002'
+    version: '0.003'
 requires:
   Scalar::Util: '0'
-  namespace::clean: '0'
+  namespace::autoclean: '0'
   perl: '5.006'
   strict: '0'
   warnings: '0'
@@ -45,10 +46,10 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=Object-ForkAware
   homepage: https://github.com/karenetheridge/Object-ForkAware
   repository: https://github.com/karenetheridge/Object-ForkAware.git
-version: '0.002'
+version: '0.003'
 x_Dist_Zilla:
   perl:
-    version: '5.021002'
+    version: '5.021003'
   plugins:
     -
       class: Dist::Zilla::Plugin::Prereqs
@@ -56,7 +57,7 @@ x_Dist_Zilla:
         Dist::Zilla::Plugin::Prereqs:
           phase: develop
           type: requires
-      name: '@Author::ETHER/bundle_options'
+      name: '@Author::ETHER/bundle_plugins'
       version: '5.020'
     -
       class: Dist::Zilla::Plugin::Git::NextVersion
@@ -165,11 +166,12 @@ x_Dist_Zilla:
             - '@Author::ETHER/Examples'
           skips: []
       name: '@Author::ETHER/Test::Compile'
-      version: '2.045'
+      version: '2.046'
     -
       class: Dist::Zilla::Plugin::Test::NoTabs
       config:
         Dist::Zilla::Plugin::Test::NoTabs:
+          filename: xt/author/no-tabs.t
           finder:
             - ':InstallModules'
             - ':ExecFiles'
@@ -177,7 +179,7 @@ x_Dist_Zilla:
             - ':TestFiles'
             - '@Author::ETHER/ExtraTestFiles'
       name: '@Author::ETHER/Test::NoTabs'
-      version: '0.08'
+      version: '0.09'
     -
       class: Dist::Zilla::Plugin::EOLTests
       name: '@Author::ETHER/EOLTests'
@@ -218,9 +220,10 @@ x_Dist_Zilla:
       class: Dist::Zilla::Plugin::Test::Kwalitee
       config:
         Dist::Zilla::Plugin::Test::Kwalitee:
+          filename: xt/release/kwalitee.t
           skiptest: []
       name: '@Author::ETHER/Test::Kwalitee'
-      version: '2.08'
+      version: '2.11'
     -
       class: Dist::Zilla::Plugin::MojibakeTests
       name: '@Author::ETHER/MojibakeTests'
@@ -241,6 +244,13 @@ x_Dist_Zilla:
       class: Dist::Zilla::Plugin::PkgVersion
       name: '@Author::ETHER/PkgVersion'
       version: '5.020'
+    -
+      class: Dist::Zilla::Plugin::AuthorityFromModule
+      config:
+        Dist::Zilla::Plugin::AuthorityFromModule:
+          module: Object::ForkAware
+      name: '@Author::ETHER/AuthorityFromModule'
+      version: '0.002'
     -
       class: Dist::Zilla::Plugin::Authority
       name: '@Author::ETHER/Authority'
@@ -321,6 +331,10 @@ x_Dist_Zilla:
               class: Pod::Weaver::Plugin::Transformer
               name: -Transformer
               version: '4.006'
+            -
+              class: Pod::Weaver::Section::Contributors
+              name: Contributors
+              version: '0.008'
       name: '@Author::ETHER/PodWeaver'
       version: '4.006'
     -
@@ -330,7 +344,7 @@ x_Dist_Zilla:
     -
       class: Dist::Zilla::Plugin::ReadmeAnyFromPod
       name: '@Author::ETHER/ReadmeAnyFromPod'
-      version: '0.142250'
+      version: '0.142470'
     -
       class: Dist::Zilla::Plugin::GithubMeta
       name: '@Author::ETHER/GithubMeta'
@@ -359,7 +373,7 @@ x_Dist_Zilla:
           inherit_version: '1'
           meta_noindex: '1'
       name: '@Author::ETHER/MetaProvides::Package'
-      version: '2.000004'
+      version: '2.001002'
     -
       class: Dist::Zilla::Plugin::MetaConfig
       name: '@Author::ETHER/MetaConfig'
@@ -417,10 +431,26 @@ x_Dist_Zilla:
     -
       class: Dist::Zilla::Plugin::ModuleBuildTiny::Fallback
       config:
+        Dist::Zilla::Plugin::ModuleBuildTiny::Fallback:
+          plugins:
+            -
+              class: Dist::Zilla::Plugin::ModuleBuild
+              config:
+                Dist::Zilla::Role::TestRunner:
+                  default_jobs: 9
+              name: ModuleBuildTiny::Fallback
+              version: '5.020'
+            -
+              class: Dist::Zilla::Plugin::ModuleBuildTiny
+              config:
+                Dist::Zilla::Role::TestRunner:
+                  default_jobs: 9
+              name: ModuleBuildTiny::Fallback
+              version: '0.007'
         Dist::Zilla::Role::TestRunner:
           default_jobs: 9
       name: '@Author::ETHER/ModuleBuildTiny::Fallback'
-      version: '0.005'
+      version: '0.006'
     -
       class: Dist::Zilla::Plugin::InstallGuide
       name: '@Author::ETHER/InstallGuide'
@@ -447,7 +477,7 @@ x_Dist_Zilla:
           run:
             - "bash -c \"if [[ `dirname %d` != .build ]]; then test -e .ackrc && grep -q -- '--ignore-dir=%d' .ackrc || echo '--ignore-dir=%d' >> .ackrc; fi; if [[ %d =~ ^%n-[.[:xdigit:]]+$ ]]; then rm -f .latest; ln -s %d .latest; fi\""
       name: '@Author::ETHER/Run::AfterBuild'
-      version: '0.024'
+      version: '0.026'
     -
       class: Dist::Zilla::Plugin::CheckStrictVersion
       name: '@Author::ETHER/CheckStrictVersion'
@@ -523,7 +553,7 @@ x_Dist_Zilla:
           run:
             - 'rm -f README.md'
       name: '@Author::ETHER/remove old READMEs'
-      version: '0.024'
+      version: '0.026'
     -
       class: Dist::Zilla::Plugin::Git::Commit
       config:
@@ -551,7 +581,7 @@ x_Dist_Zilla:
         Dist::Zilla::Plugin::Git::Tag:
           branch: ~
           signed: 0
-          tag: v0.002
+          tag: v0.003
           tag_format: v%v%t
           tag_message: v%v%t
           time_zone: local
@@ -580,7 +610,7 @@ x_Dist_Zilla:
         Dist::Zilla::Plugin::Run::Role::Runner:
           run: REDACTED
       name: '@Author::ETHER/install release'
-      version: '0.024'
+      version: '0.026'
     -
       class: Dist::Zilla::Plugin::ConfirmRelease
       name: '@Author::ETHER/ConfirmRelease'
@@ -589,10 +619,10 @@ x_Dist_Zilla:
       class: Dist::Zilla::Plugin::Test::CleanNamespaces
       config:
         Dist::Zilla::Plugin::Test::CleanNamespaces:
-          filename: xt/release/clean-namespaces.t
+          filename: xt/author/clean-namespaces.t
           skips: []
       name: Test::CleanNamespaces
-      version: '0.005'
+      version: '0.006'
     -
       class: Dist::Zilla::Plugin::FinderCode
       name: ':InstallModules'
@@ -635,3 +665,7 @@ x_Dist_Zilla:
       is_trial: '0'
     version: '5.020'
 x_authority: cpan:ETHER
+x_authority_from_module: Object::ForkAware
+x_contributors:
+  - 'Graham Knop <haarg@haarg.org>'
+x_permissions_from_module: Object::ForkAware

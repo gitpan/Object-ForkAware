@@ -9,7 +9,7 @@ use warnings;
 BEGIN {
 my %configure_requires = (
     'ExtUtils::MakeMaker' => '0',
-    'Module::Build::Tiny' => '0.037',
+    'Module::Build::Tiny' => '0.038',
 );
 
 my @missing = grep {
@@ -72,7 +72,7 @@ my %WriteMakefileArgs = (
   "AUTHOR" => "Karen Etheridge <ether\@cpan.org>",
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => 0,
-    "Module::Build::Tiny" => "0.037"
+    "Module::Build::Tiny" => "0.038"
   },
   "DISTNAME" => "Object-ForkAware",
   "EXE_FILES" => [],
@@ -80,7 +80,7 @@ my %WriteMakefileArgs = (
   "NAME" => "Object::ForkAware",
   "PREREQ_PM" => {
     "Scalar::Util" => 0,
-    "namespace::clean" => 0,
+    "namespace::autoclean" => 0,
     "strict" => 0,
     "warnings" => 0
   },
@@ -88,11 +88,12 @@ my %WriteMakefileArgs = (
     "ExtUtils::MakeMaker" => 0,
     "File::Spec" => 0,
     "Test::Fatal" => 0,
-    "Test::More" => 0,
+    "Test::More" => "0.88",
     "Test::Warnings" => "0.009",
+    "if" => 0,
     "lib" => 0
   },
-  "VERSION" => "0.002",
+  "VERSION" => "0.003",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -104,10 +105,11 @@ my %FallbackPrereqs = (
   "File::Spec" => 0,
   "Scalar::Util" => 0,
   "Test::Fatal" => 0,
-  "Test::More" => 0,
+  "Test::More" => "0.88",
   "Test::Warnings" => "0.009",
+  "if" => 0,
   "lib" => 0,
-  "namespace::clean" => 0,
+  "namespace::autoclean" => 0,
   "strict" => 0,
   "warnings" => 0
 );
